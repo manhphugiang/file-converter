@@ -349,7 +349,7 @@ kubectl apply -f k3s/scaling/keda-scalers.yaml
 
 ## Docker Images (Multi-arch: amd64 + arm64)
 
-Docker Hub: [giangma/fileconverter](https://hub.docker.com/repository/docker/giangma/fileconverter/general)
+Docker Hub: [giangma/fileconverter](https://hub.docker.com/r/giangma/fileconverter)
 
 ```bash
 # Pull all images (optional - K3s will auto-pull)

@@ -70,7 +70,7 @@ See [k3s/README.md](k3s/README.md) for detailed cluster setup.
 
 ## Docker Images
 
-Docker Hub: [giangma/fileconverter](https://hub.docker.com/repository/docker/giangma/fileconverter/general)
+Docker Hub: [giangma/fileconverter](https://hub.docker.com/r/giangma/fileconverter)
 
 All images are multi-arch (amd64 + arm64):
 
