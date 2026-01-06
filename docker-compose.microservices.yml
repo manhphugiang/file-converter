@@ -1,0 +1,309 @@
+version: '3.8'
+
+services:
+  # SINGLE ENTRY POINT - Nginx Gateway
+  nginx-gateway:
+    image: nginx:alpine
+    container_name: file-converter-gateway
+    ports:
+      - "80:80"  # ONLY EXTERNAL PORT
+    volumes:
+      - ./nginx/gateway.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - frontend
+      - job-manager
+      - docx-pdf-service
+      - monitoring-dashboard
+    networks:
+      - file-converter-network
+    restart: unless-stopped
+
+  # MONITORING DASHBOARD
+  monitoring-dashboard:
+    build:
+      context: ./services
+      dockerfile: monitoring-service/Dockerfile
+    container_name: file-converter-monitoring
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_ACCESS_KEY=minioadmin
+      - MINIO_SECRET_KEY=minioadmin123
+      - MINIO_BUCKET_NAME=file-converter
+    depends_on:
+      - redis
+      - minio
+    networks:
+      - file-converter-network
+    restart: unless-stopped
+
+  # FRONTEND - React App (Internal Only)
+  frontend:
+    build: ./frontend
+    container_name: file-converter-frontend
+    # NO PORTS EXPOSED - Internal only
+    environment:
+      - REACT_APP_API_URL=http://localhost
+    networks:
+      - file-converter-network
+    restart: unless-stopped
+
+  # JOB MANAGER SERVICE - Central orchestration
+  job-manager:
+    build:
+      context: ./services
+      dockerfile: job-manager-service/Dockerfile
+    container_name: file-converter-job-manager
+    # NO PORTS EXPOSED - Internal only
+    environment:
+      - DEBUG=false
+      - LOG_LEVEL=INFO
+      - DATABASE_URL=postgresql://fileconverter:fileconverter123@postgres:5432/fileconverter
+      - REDIS_URL=redis://redis:6379/0
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_ACCESS_KEY=minioadmin
+      - MINIO_SECRET_KEY=minioadmin123
+      - MINIO_SECURE=false
+      - MINIO_BUCKET_NAME=file-converter
+      - MAX_FILE_SIZE=104857600  # 100MB
+      - JOB_EXPIRY_HOURS=24
+      - FAILED_JOB_EXPIRY_HOURS=6
+      - CORS_ORIGINS=*
+    depends_on:
+      - postgres
+      - redis
+      - minio
+    networks:
+      - file-converter-network
+    restart: unless-stopped
+
+  # DOCX TO PDF SERVICE (pandoc + LaTeX ~600-700MB)
+  docx-pdf-service:
+    build:
+      context: ./services
+      dockerfile: docx-pdf-service/Dockerfile
+    container_name: file-converter-docx-pdf
+    environment:
+      - DEBUG=false
+      - LOG_LEVEL=INFO
+      - DATABASE_URL=postgresql://fileconverter:fileconverter123@postgres:5432/fileconverter
+      - REDIS_URL=redis://redis:6379/0
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_ACCESS_KEY=minioadmin
+      - MINIO_SECRET_KEY=minioadmin123
+      - MINIO_SECURE=false
+      - MINIO_BUCKET_NAME=file-converter
+      - CONVERSION_WORKERS=3
+      - CONVERSION_TIMEOUT=30
+      - TEMP_DIR=/tmp/file-converter
+    depends_on:
+      - postgres
+      - redis
+      - minio
+    networks:
+      - file-converter-network
+    restart: unless-stopped
+
+  # PDF TO DOCX SERVICE (pdf2docx only ~120-180MB)
+  pdf-docx-service:
+    build:
+      context: ./services
+      dockerfile: pdf-docx-service/Dockerfile
+    container_name: file-converter-pdf-docx
+    environment:
+      - DEBUG=false
+      - LOG_LEVEL=INFO
+      - DATABASE_URL=postgresql://fileconverter:fileconverter123@postgres:5432/fileconverter
+      - REDIS_URL=redis://redis:6379/0
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_ACCESS_KEY=minioadmin
+      - MINIO_SECRET_KEY=minioadmin123
+      - MINIO_SECURE=false
+      - MINIO_BUCKET_NAME=file-converter
+      - CONVERSION_WORKERS=3
+      - CONVERSION_TIMEOUT=60
+      - TEMP_DIR=/tmp/file-converter
+    depends_on:
+      - postgres
+      - redis
+      - minio
+    networks:
+      - file-converter-network
+    restart: unless-stopped
+
+  # IMAGE SERVICE - PDF <-> JPG/PNG
+  image-service:
+    build:
+      context: ./services
+      dockerfile: image-service/Dockerfile
+    container_name: file-converter-image
+    environment:
+      - DEBUG=false
+      - LOG_LEVEL=INFO
+      - DATABASE_URL=postgresql://fileconverter:fileconverter123@postgres:5432/fileconverter
+      - REDIS_URL=redis://redis:6379/0
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_ACCESS_KEY=minioadmin
+      - MINIO_SECRET_KEY=minioadmin123
+      - MINIO_SECURE=false
+      - MINIO_BUCKET_NAME=file-converter
+      - CONVERSION_WORKERS=2
+      - CONVERSION_TIMEOUT=60
+      - TEMP_DIR=/tmp/file-converter
+    depends_on:
+      - postgres
+      - redis
+      - minio
+    networks:
+      - file-converter-network
+    restart: unless-stopped
+
+  # DOCX TO EPUB SERVICE (Future)
+  # docx-epub-service:
+  #   build:
+  #     context: ./services
+  #     dockerfile: docx-epub-service/Dockerfile
+  #   container_name: file-converter-docx-epub
+  #   # NO PORTS EXPOSED - Internal only
+  #   environment:
+  #     - DEBUG=false
+  #     - LOG_LEVEL=INFO
+  #     - DATABASE_URL=postgresql://fileconverter:fileconverter123@postgres:5432/fileconverter
+  #     - REDIS_URL=redis://redis:6379/0
+  #     - MINIO_ENDPOINT=minio:9000
+  #     - MINIO_ACCESS_KEY=minioadmin
+  #     - MINIO_SECRET_KEY=minioadmin123
+  #     - MINIO_SECURE=false
+  #     - MINIO_BUCKET_NAME=file-converter
+  #     - CONVERSION_WORKERS=2
+  #     - CONVERSION_TIMEOUT=300
+  #     - TEMP_DIR=/tmp/file-converter
+  #   depends_on:
+  #     - postgres
+  #     - redis
+  #     - minio
+  #   networks:
+  #     - file-converter-network
+  #   restart: unless-stopped
+  #   profiles:
+  #     - full  # Only start with --profile full
+
+  # MP4 TO MP3 SERVICE (Future)
+  # mp4-mp3-service:
+  #   build:
+  #     context: ./services
+  #     dockerfile: mp4-mp3-service/Dockerfile
+  #   container_name: file-converter-mp4-mp3
+  #   # NO PORTS EXPOSED - Internal only
+  #   environment:
+  #     - DEBUG=false
+  #     - LOG_LEVEL=INFO
+  #     - DATABASE_URL=postgresql://fileconverter:fileconverter123@postgres:5432/fileconverter
+  #     - REDIS_URL=redis://redis:6379/0
+  #     - MINIO_ENDPOINT=minio:9000
+  #     - MINIO_ACCESS_KEY=minioadmin
+  #     - MINIO_SECRET_KEY=minioadmin123
+  #     - MINIO_SECURE=false
+  #     - MINIO_BUCKET_NAME=file-converter
+  #     - CONVERSION_WORKERS=2
+  #     - CONVERSION_TIMEOUT=600
+  #     - TEMP_DIR=/tmp/file-converter
+  #   depends_on:
+  #     - postgres
+  #     - redis
+  #     - minio
+  #   networks:
+  #     - file-converter-network
+  #   restart: unless-stopped
+  #   profiles:
+  #     - full  # Only start with --profile full
+
+  # INFRASTRUCTURE SERVICES - NO EXTERNAL PORTS
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15
+    container_name: file-converter-postgres
+    # NO PORTS EXPOSED - Internal only
+    environment:
+      - POSTGRES_DB=fileconverter
+      - POSTGRES_USER=fileconverter
+      - POSTGRES_PASSWORD=fileconverter123
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - file-converter-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fileconverter"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Redis Message Queue
+  redis:
+    image: redis:alpine
+    container_name: file-converter-redis
+    # NO PORTS EXPOSED - Internal only
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - file-converter-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # MinIO Object Storage
+  minio:
+    image: minio/minio:latest
+    container_name: file-converter-minio
+    # TEMPORARY: Ports exposed for development access
+    ports:
+      - "9000:9000"  # MinIO API
+      - "9001:9001"  # MinIO Console
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin123
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    networks:
+      - file-converter-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  # MinIO Setup - Create bucket
+  minio-setup:
+    image: minio/mc:latest
+    container_name: file-converter-minio-setup
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      /usr/bin/mc alias set myminio http://minio:9000 minioadmin minioadmin123;
+      /usr/bin/mc mb myminio/file-converter;
+      /usr/bin/mc policy set public myminio/file-converter;
+      exit 0;
+      "
+    networks:
+      - file-converter-network
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  minio_data:
+    driver: local
+
+networks:
+  file-converter-network:
+    driver: bridge

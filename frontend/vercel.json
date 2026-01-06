@@ -1,0 +1,33 @@
+{
+  "version": 2,
+  "name": "file-converter-frontend",
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "build"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/static/(.*)",
+      "headers": {
+        "cache-control": "public, max-age=31536000, immutable"
+      }
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ],
+  "env": {
+    "REACT_APP_API_URL": "@file-converter-api-url"
+  },
+  "build": {
+    "env": {
+      "REACT_APP_API_URL": "@file-converter-api-url"
+    }
+  }
+}

@@ -1,0 +1,226 @@
+.error-display {
+  margin: 16px 0;
+  border-radius: 8px;
+  border: 1px solid #f5c6cb;
+  background-color: #f8d7da;
+  color: #721c24;
+  overflow: hidden;
+}
+
+.error-content {
+  padding: 16px;
+}
+
+.error-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.error-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.error-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.error-title {
+  margin: 0 0 4px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #721c24;
+}
+
+.error-message {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #721c24;
+}
+
+.error-dismiss {
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: #721c24;
+  cursor: pointer;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  flex-shrink: 0;
+  transition: background-color 0.2s ease;
+}
+
+.error-dismiss:hover {
+  background-color: rgba(114, 28, 36, 0.1);
+}
+
+.error-details {
+  margin-top: 12px;
+  padding: 12px;
+  background-color: rgba(114, 28, 36, 0.05);
+  border-radius: 4px;
+  border-left: 3px solid #dc3545;
+}
+
+.error-details p {
+  margin: 0;
+  font-size: 13px;
+  color: #721c24;
+  font-family: 'Courier New', monospace;
+}
+
+.error-suggestions {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(114, 28, 36, 0.2);
+}
+
+.error-suggestions h5 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #721c24;
+}
+
+.error-suggestions ul {
+  margin: 0;
+  padding-left: 20px;
+  list-style-type: disc;
+}
+
+.error-suggestions li {
+  margin: 4px 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #721c24;
+}
+
+.error-actions {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(114, 28, 36, 0.2);
+  display: flex;
+  gap: 8px;
+}
+
+.retry-button {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.retry-button:hover {
+  background-color: #c82333;
+}
+
+.retry-button:active {
+  background-color: #bd2130;
+}
+
+/* Success variant */
+.error-display.success {
+  border-color: #c3e6cb;
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.error-display.success .error-title,
+.error-display.success .error-message,
+.error-display.success .error-suggestions h5,
+.error-display.success .error-suggestions li,
+.error-display.success .error-dismiss {
+  color: #155724;
+}
+
+.error-display.success .error-details {
+  background-color: rgba(21, 87, 36, 0.05);
+  border-left-color: #28a745;
+}
+
+.error-display.success .error-details p {
+  color: #155724;
+}
+
+.error-display.success .retry-button {
+  background-color: #28a745;
+}
+
+.error-display.success .retry-button:hover {
+  background-color: #218838;
+}
+
+/* Warning variant */
+.error-display.warning {
+  border-color: #ffeaa7;
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.error-display.warning .error-title,
+.error-display.warning .error-message,
+.error-display.warning .error-suggestions h5,
+.error-display.warning .error-suggestions li,
+.error-display.warning .error-dismiss {
+  color: #856404;
+}
+
+.error-display.warning .error-details {
+  background-color: rgba(133, 100, 4, 0.05);
+  border-left-color: #ffc107;
+}
+
+.error-display.warning .error-details p {
+  color: #856404;
+}
+
+.error-display.warning .retry-button {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.error-display.warning .retry-button:hover {
+  background-color: #e0a800;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .error-content {
+    padding: 12px;
+  }
+  
+  .error-header {
+    gap: 8px;
+  }
+  
+  .error-title {
+    font-size: 15px;
+  }
+  
+  .error-message {
+    font-size: 13px;
+  }
+  
+  .error-suggestions li {
+    font-size: 12px;
+  }
+  
+  .retry-button {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+}

@@ -1,0 +1,60 @@
+# K3s comes with local-path-provisioner by default
+# This configures it to use storage on each node
+# 
+# Node Storage Layout:
+# - master: /dev/sda (29.8GB ext4 USB) → mount at /mnt/usb
+# - worker1: /dev/sda (119.5GB ext4 USB) → mount at /mnt/usb
+# - worker2: /dev/sda1 (59.8GB ext4 USB) → mount at /mnt/usb
+# - worker3: /dev/sda (466.3GB ext4 USB) → mount at /mnt/usb
+# - worker4: /dev/sda2 (111.5GB ext4 internal SSD) → already mounted as root, use /var/lib/k3s-storage
+#
+# Total cluster storage: ~786GB
+#
+# RPi nodes (master, worker1-3) - Mount USB drives:
+# sudo mkdir -p /mnt/usb
+# sudo mount /dev/sda /mnt/usb   # or /dev/sda1 for worker2
+# Add to /etc/fstab: /dev/sda /mnt/usb ext4 defaults,nofail 0 2
+# sudo mkdir -p /mnt/usb/k3s-storage
+#
+# Worker4 (MacBook) - Use internal SSD:
+# sudo mkdir -p /var/lib/k3s-storage
+#
+# Label the MacBook node for PostgreSQL:
+# kubectl label nodes worker4 kubernetes.io/hostname=worker4
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: local-path-config
+  namespace: kube-system
+data:
+  config.json: |-
+    {
+      "nodePathMap": [
+        {
+          "node": "DEFAULT_PATH_FOR_NON_LISTED_NODES",
+          "paths": ["/mnt/usb/k3s-storage"]
+        }
+      ]
+    }
+  setup: |-
+    #!/bin/sh
+    set -eu
+    mkdir -m 0777 -p "$VOL_DIR"
+  teardown: |-
+    #!/bin/sh
+    set -eu
+    rm -rf "$VOL_DIR"
+  helperPod.yaml: |-
+    apiVersion: v1
+    kind: Pod
+    metadata:
+      name: helper-pod
+    spec:
+      tolerations:
+        - key: node-role.kubernetes.io/master
+          effect: NoSchedule
+      containers:
+        - name: helper-pod
+          image: busybox
+          imagePullPolicy: IfNotPresent

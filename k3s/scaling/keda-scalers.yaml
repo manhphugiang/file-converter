@@ -1,0 +1,69 @@
+# KEDA ScaledObjects for Redis queue-based autoscaling
+# Cluster: 4 workers (3x RPi 4GB + 1x MacBook 8GB)
+# Conservative scaling for Pi nodes
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: docx-pdf-scaler
+  namespace: file-converter
+spec:
+  scaleTargetRef:
+    name: docx-pdf-service
+  minReplicaCount: 1
+  maxReplicaCount: 2  # CPU-heavy, 1-2 concurrent jobs per Pi node
+  pollingInterval: 10
+  cooldownPeriod: 30
+  triggers:
+    - type: redis
+      metadata:
+        address: redis.file-converter.svc.cluster.local:6379
+        listName: queue:docx_pdf
+        listLength: "2"
+        enableTLS: "false"
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: pdf-docx-scaler
+  namespace: file-converter
+spec:
+  scaleTargetRef:
+    name: pdf-docx-service
+  minReplicaCount: 1
+  maxReplicaCount: 2  # Lightweight, can scale slightly more
+  pollingInterval: 10
+  cooldownPeriod: 30
+  triggers:
+    - type: redis
+      metadata:
+        address: redis.file-converter.svc.cluster.local:6379
+        listName: queue:pdf_docx
+        listLength: "2"
+        enableTLS: "false"
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: image-service-scaler
+  namespace: file-converter
+spec:
+  scaleTargetRef:
+    name: image-service
+  minReplicaCount: 1
+  maxReplicaCount: 3  # Moderate CPU, handle multiple jobs
+  pollingInterval: 10
+  cooldownPeriod: 30
+  triggers:
+    - type: redis
+      metadata:
+        address: redis.file-converter.svc.cluster.local:6379
+        listName: queue:pdf_image
+        listLength: "2"
+        enableTLS: "false"
+    - type: redis
+      metadata:
+        address: redis.file-converter.svc.cluster.local:6379
+        listName: queue:image_pdf
+        listLength: "2"
+        enableTLS: "false"

@@ -1,0 +1,77 @@
+# Image Service - Low resources per pod, scales horizontally
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: image-service
+  namespace: file-converter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: image-service
+  template:
+    metadata:
+      labels:
+        app: image-service
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/master
+                    operator: DoesNotExist
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 50
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app: image-service
+                topologyKey: kubernetes.io/hostname
+      containers:
+        - name: image-service
+          image: giangma/fileconverter:image-service-v2.1
+          ports:
+            - containerPort: 8005
+          envFrom:
+            - configMapRef:
+                name: app-config
+            - secretRef:
+                name: postgres-secret
+          env:
+            - name: CONVERSION_WORKERS
+              value: "1"
+            - name: CONVERSION_TIMEOUT
+              value: "120"
+          resources:
+            requests:
+              memory: "100Mi"
+              cpu: "50m"
+            limits:
+              memory: "512Mi"
+              cpu: "400m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8005
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8005
+            initialDelaySeconds: 15
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: image-service
+  namespace: file-converter
+spec:
+  selector:
+    app: image-service
+  ports:
+    - port: 8005
+      targetPort: 8005

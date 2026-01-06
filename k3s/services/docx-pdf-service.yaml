@@ -1,0 +1,78 @@
+# DOCX-PDF Service - Low resources per pod, scales horizontally
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: docx-pdf-service
+  namespace: file-converter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: docx-pdf-service
+  template:
+    metadata:
+      labels:
+        app: docx-pdf-service
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/master
+                    operator: DoesNotExist
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 50
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app: docx-pdf-service
+                topologyKey: kubernetes.io/hostname
+      containers:
+        - name: docx-pdf-service
+          image: giangma/fileconverter:docx-pdf-service-v2.2
+          ports:
+            - containerPort: 8001
+          envFrom:
+            - configMapRef:
+                name: app-config
+            - secretRef:
+                name: postgres-secret
+          env:
+            - name: CONVERSION_WORKERS
+              value: "1"
+            - name: CONVERSION_TIMEOUT
+              value: "300"
+          resources:
+            requests:
+              memory: "200Mi"
+              cpu: "100m"
+            limits:
+              memory: "768Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8001
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8001
+            initialDelaySeconds: 30
+            periodSeconds: 15
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: docx-pdf-service
+  namespace: file-converter
+spec:
+  selector:
+    app: docx-pdf-service
+  ports:
+    - port: 8001
+      targetPort: 8001

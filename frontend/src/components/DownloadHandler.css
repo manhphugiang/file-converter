@@ -1,0 +1,240 @@
+.download-handler {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.download-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  text-decoration: none;
+}
+
+.download-button:hover {
+  background-color: #218838;
+}
+
+.download-button:active {
+  transform: translateY(1px);
+}
+
+.download-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+}
+
+.progress-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.download-icon {
+  font-size: 1.5rem;
+  color: #28a745;
+}
+
+.progress-details {
+  flex: 1;
+}
+
+.progress-text {
+  margin: 0 0 4px 0;
+  font-size: 0.9rem;
+  color: #333;
+  font-weight: 500;
+}
+
+.progress-percentage {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 6px;
+  background-color: #e9ecef;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background-color: #28a745;
+  transition: width 0.3s ease;
+  border-radius: 3px;
+}
+
+.download-success {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background-color: #d4edda;
+  border: 1px solid #c3e6cb;
+  border-radius: 6px;
+  color: #155724;
+}
+
+.success-icon {
+  font-size: 1.2rem;
+}
+
+.success-text {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.download-error {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 15px;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-radius: 6px;
+}
+
+.error-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: #721c24;
+}
+
+.error-icon {
+  font-size: 1.2rem;
+  margin-top: 1px;
+  flex-shrink: 0;
+}
+
+.error-text {
+  font-size: 0.9rem;
+  line-height: 1.4;
+  flex: 1;
+}
+
+.retry-button {
+  align-self: flex-start;
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.retry-button:hover {
+  background-color: #c82333;
+}
+
+.retry-button:active {
+  transform: translateY(1px);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .download-button {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .progress-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .download-icon {
+    align-self: center;
+  }
+  
+  .progress-details {
+    width: 100%;
+    text-align: center;
+  }
+  
+  .error-content {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .error-icon {
+    align-self: center;
+  }
+  
+  .retry-button {
+    align-self: center;
+  }
+}
+
+/* Animation for progress bar */
+@keyframes progressPulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.download-progress .progress-fill {
+  animation: progressPulse 1.5s ease-in-out infinite;
+}
+
+/* Success animation */
+@keyframes successFade {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.download-success {
+  animation: successFade 0.3s ease-out;
+}
+
+/* Error animation */
+@keyframes errorShake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-5px);
+  }
+  75% {
+    transform: translateX(5px);
+  }
+}
+
+.download-error {
+  animation: errorShake 0.5s ease-out;
+}
